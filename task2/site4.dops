@@ -1,0 +1,16 @@
+server {
+ listen 443 ssl;
+ server_name site4.dops;
+ ssl_certificate
+ /etc/nginx/ssl/selfsigned.crt;
+ ssl_certificate_key /etc/nginx/ssl/selfsigned.key;
+ gzip on;
+ gzip_types text/plain application/json application/javascript text/css;
+access_log /var/log/nginx/dops_access.log;
+ error_log /var/log/nginx/dops_error.log;
+ location /dops/ {
+ proxy_pass http://backend_dops2;
+ proxy_set_header Host $host;
+ proxy_set_header X-Real-IP $remote_addr;
+ }
+ }
