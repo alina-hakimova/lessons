@@ -1,0 +1,14 @@
+[Unit]
+Description=Java Hello World App
+After=network.target
+
+[Service]
+User={{ app_user }}
+WorkingDirectory=/opt/java_app
+ExecStart=/usr/bin/java -jar /opt/java_app/app.jar --server.port={{ app_ports.java }}
+Restart=always
+Environment=SPRING_PROFILES_ACTIVE=prod
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,0 +1,27 @@
+
+- name: Создать директорию для Java приложения
+  file:
+    path: /opt/java_app
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+
+- name: Копировать JAR-файл приложения
+  copy:
+    src: app.jar
+    dest: /opt/java_app/app.jar
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+
+- name: Создать systemd unit-файл для Java приложения
+  template:
+    src: systemd/java_app.service.j2
+    dest: /etc/systemd/system/java_app.service
+  notify: restart_java_app
+
+- name: Запустить и включить Java приложение
+  systemd:
+    name: java_app
+    state: started
+    enabled: yes
+

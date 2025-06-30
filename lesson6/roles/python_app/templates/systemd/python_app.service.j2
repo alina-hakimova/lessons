@@ -1,0 +1,9 @@
+[Unit]
+ Description=Python Hello World App
+ [Service]
+ User={{ app_user }}
+ ExecStart=/usr/bin/python3 /opt/python_app/app.py
+ WorkingDirectory=/opt/python_app
+ Restart=always
+ [Install]
+ WantedBy=multi-user.target

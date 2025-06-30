@@ -1,0 +1,15 @@
+- name: Установка системных зависимостей
+  apt:
+    name:
+      - python3
+      - python3-pip
+      - golang
+      - default-jdk
+      - nodejs
+      - npm
+      - curl
+      - nginx
+      - openssl
+    state: present
+    update_cache: yes
+  tags: dependencies

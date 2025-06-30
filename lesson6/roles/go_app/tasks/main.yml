@@ -1,0 +1,46 @@
+---
+- name: Создание директории для Go приложения
+  file:
+    path: /opt/go_app
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+
+- name: Копирование Go приложения
+  copy:
+    content: |
+      package main
+
+      import (
+          "fmt"
+          "net/http"
+      )
+
+      func handler(w http.ResponseWriter, r *http.Request) {
+          fmt.Fprintf(w, "Hello from Go!")
+      }
+
+      func main() {
+          http.HandleFunc("/", handler)
+          http.ListenAndServe(":{{ app_ports.go }}", nil)
+      }
+    dest: /opt/go_app/main.go
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+
+- name: Компиляция Go приложения
+  command: go build -o /opt/go_app/app /opt/go_app/main.go
+  args:
+    chdir: /opt/go_app
+
+- name: Настройка systemd службы
+  template:
+    src: systemd/go_app.service.j2
+    dest: /etc/systemd/system/go_app.service
+  notify: restart_go_app
+
+- name: Запуск и включение службы
+  systemd:
+    name: go_app
+    state: started
+    enabled: yes

@@ -1,0 +1,32 @@
+- hosts: staging_servers
+  become: true
+  vars_files:
+    - grouup_vars/all.yml
+  roles:
+    - common        # Базовая настройка (пакеты)
+    - python_app    # Flask приложение
+    - node_app      # Node.js приложение
+    - go_app        # Go приложение
+    - java_app      # Java приложение
+    - nginx_proxy   # Настройка Nginx
+  handlers:
+    - name: restart_nginx
+      service:
+        name: nginx
+        state: restarted
+    - name: restart_python_app
+      systemd:
+        name: python_app
+        state: restarted
+    - name: restart_node_app
+      systemd:
+        name: node_app
+        state: restarted
+    - name: restart_go_app
+      systemd:
+        name: go_app
+        state: restarted
+    - name: restart_java_app
+      systemd:
+        name: java_app
+        state: restarted

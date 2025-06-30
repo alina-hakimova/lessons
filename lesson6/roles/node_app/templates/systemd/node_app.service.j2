@@ -1,0 +1,11 @@
+[Unit]
+Description=Node.js Hello World App
+
+[Service]
+User={{ app_user }}
+ExecStart=/usr/bin/node /opt/node_app/app.js
+WorkingDirectory=/opt/node_app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

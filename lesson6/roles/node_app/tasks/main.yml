@@ -1,0 +1,34 @@
+- name: Создание директории для приложения
+  file:
+    path: /opt/node_app
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+
+- name: Установка Express
+  npm:
+    name: express
+    global: yes
+
+- name: Копирование Node.js приложения
+  copy:
+    content: |
+      const express = require('express');
+      const app = express();
+      app.get('/', (req, res) => res.send('Hello from Node.js!'));
+      app.listen({{ app_ports.node }}, '0.0.0.0');
+    dest: /opt/node_app/app.js
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+
+- name: Настройка systemd службы
+  template:
+    src:   systemd/node_app.service.j2
+    dest: /etc/systemd/system/node_app.service
+  notify: restart_node_app
+
+- name: Запуск и включение службы
+  systemd:
+    name: node_app
+    state: started
+    enabled: yes

@@ -1,0 +1,22 @@
+- name: Настройка конфигурации NGINX
+  template:
+    src: ../../templates/nginx/helloworld.j2
+    dest: /etc/nginx/sites-available/helloworld.conf
+
+- name: Активация конфигурации
+  file:
+    src: /etc/nginx/sites-available/helloworld.conf
+    dest: /etc/nginx/sites-enabled/helloworld.conf
+    state: link
+
+- name: Проверка конфигурации NGINX
+  command: nginx -t
+  register: nginx_test
+  changed_when: false
+  notify: restart_nginx
+
+- name: Обновление /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "127.0.0.1 {{ domain_name }}"
+    state: present

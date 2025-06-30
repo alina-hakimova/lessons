@@ -1,0 +1,38 @@
+- name: Создание директории для приложения
+  file:
+    path: /opt/python_app
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+
+- name: Установка Flask
+  pip:
+    name: flask
+    executable: pip3
+    extra_args: --break-system-packages
+
+- name: Копирование Python приложения
+  copy:
+    content: |
+      from flask import Flask
+      app = Flask(__name__)
+      @app.route('/')
+      def hello():
+        return "Hello from Python Flask!"
+      if __name__ == '__main__':
+        app.run(host='0.0.0.0', port={{ app_ports.python }})
+    dest: /opt/python_app/app.py
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+
+- name: Настройка systemd службы
+  template:
+    src: systemd/python_app.service.j2
+    dest: /etc/systemd/system/python_app.service
+  notify: restart_python_app
+
+- name: Запуск и включение службы
+  systemd:
+    name: python_app
+    state: started
+    enabled: yes

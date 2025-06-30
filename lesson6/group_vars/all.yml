@@ -1,0 +1,17 @@
+# Параметры приложений
+app_ports:
+  python: 8001
+  node: 8002
+  go: 8003
+  java: 8004
+
+# SSL параметры
+ssl_dir: /etc/nginx/ssl
+ssl_key: "{{ ssl_dir }}/selfsigned.key"
+ssl_cert: "{{ ssl_dir }}/selfsigned.crt"
+
+# Доменное имя
+domain_name: helloworld.alinadobs
+
+# Пользователь для запуска приложений
+app_user: "{{ ansible_user }}"
