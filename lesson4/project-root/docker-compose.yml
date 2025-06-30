@@ -1,0 +1,128 @@
+version: '3.8'
+
+secrets:
+  app_secret:
+    file: ./secrets/app_secret.txt
+
+volumes:
+  python_data:
+  python_logs:
+  node_data:
+  node_logs:
+  go_data:
+  go_logs:
+  java_data:
+  java_logs:
+  nginx_logs:
+
+networks:
+  backend:
+  frontend:
+
+services:
+  python_app:
+    build:
+      context: ./python_app
+      args:
+        UID: ${UID}
+        GID: ${GID}
+    env_file: ./python_app/.env
+    secrets:
+      - app_secret
+    volumes:
+      - python_data:/app/data
+      - python_logs:/app/logs
+    networks:
+      - backend
+    user: "${UID}:${GID}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  node_app:
+    build:
+      context: ./node_app
+      args:
+        UID: ${UID}
+        GID: ${GID}
+    env_file: ./node_app/.env
+    secrets:
+      - app_secret
+    volumes:
+      - node_data:/app/data
+      - node_logs:/app/logs
+    networks:
+      - backend
+    user: "${UID}:${GID}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8002/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  go_app:
+    build:
+      context: ./go_app
+      args:
+        UID: ${UID}
+        GID: ${GID}
+    env_file: ./go_app/.env
+    secrets:
+      - app_secret
+    volumes:
+      - go_data:/app/data
+      - go_logs:/app/logs
+    networks:
+      - backend
+    user: "${UID}:${GID}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8003/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  java_app:
+    build:
+      context: ./java_app
+      args:
+        UID: ${UID}
+        GID: ${GID}
+    env_file: ./java_app/.env
+    secrets:
+      - app_secret
+    volumes:
+      - java_data:/app/data
+      - java_logs:/app/logs
+    networks:
+      - backend
+    user: "${UID}:${GID}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8004/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./nginx/ssl:/etc/nginx/ssl
+      - nginx_logs:/var/log/nginx
+    networks:
+      - backend
+      - frontend
+    depends_on:
+      - python_app
+      - node_app
+      - go_app
+      - java_app
+    healthcheck:
+      test: ["CMD", "curl", "-kf", "https://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
