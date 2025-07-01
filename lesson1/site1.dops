@@ -4,7 +4,7 @@ server {
  access_log /var/log/nginx/dops_access.log;
  error_log /var/log/nginx/dops_error.log;
  location / {
- proxy_pass http://backend_dops;
+ proxy_pass http://backend_site1;
 proxy_set_header Host $host;
  proxy_set_header X-Real-IP $remote_addr;
  }
