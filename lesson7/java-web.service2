@@ -1,0 +1,10 @@
+ [Unit]
+ Description=Java Web Server
+ [Service]
+ WorkingDirectory=/home/alina2/проект-gradle
+ ExecStart=/usr/bin/java -jar build/libs/java-server-gradle.jar
+ Restart=always
+ RestartSec=5
+ User=alina2
+ [Install]
+ WantedBy=multi-user.target

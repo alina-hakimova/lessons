@@ -1,0 +1,10 @@
+ [Unit]
+ Description=Java Web Server
+ [Service]
+ WorkingDirectory=/home/alina/java-server
+ ExecStart=/usr/bin/java -jar target/java-server-1.0-SNAPSHOT.jar
+ Restart=always
+ RestartSec=5
+ User=alina2
+ [Install]
+ WantedBy=multi-user.target
