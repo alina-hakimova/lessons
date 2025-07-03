@@ -1,0 +1,18 @@
+global
+    log /dev/log local0
+    maxconn 2000
+defaults
+    mode http
+    timeout connect 5000
+    timeout client 50000
+    timeout server 50000
+frontend http_front
+    bind *:{{ haproxy_frontend_port }}
+    stats uri /haproxy?stats
+    default_backend http_back
+backend http_back
+    balance roundrobin
+    server python_app localhost:{{ app_ports.python }} check
+    server node_app localhost:{{ app_ports.node }} check
+    server go_app localhost:{{ app_ports.go }} check
+    server java_app localhost:{{ app_ports.java }} check

@@ -1,0 +1,29 @@
+---
+- name: Копировать Java приложение
+  copy:
+    src: Main.java
+    dest: /opt/java_app/Main.java
+
+- name: Сгенерировать Dockerfile из шаблона
+  template:
+    src: java.Dockerfile.j2
+    dest: /opt/java_app/Dockerfile
+
+- name: Построить Docker-образ
+  community.docker.docker_image:
+    name: java_app
+    tag: latest
+    source: build
+    build:
+      path: /opt/java_app
+
+- name: Запустить контейнер приложения
+  community.docker.docker_container:
+    name: java_app
+    image: java_app:latest
+    state: started
+    restart_policy: always
+    published_ports:
+      - "8004:5000"  # Порт 8004 на хосте, 5000 в контейнере
+    env:
+      SECRET_MESSAGE: "{{ secret_message }}"

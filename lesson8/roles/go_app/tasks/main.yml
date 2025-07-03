@@ -1,0 +1,48 @@
+---
+- name: Очистить и подготовить рабочую директорию
+  block:
+    - name: Удалить старую директорию
+      file:
+        path: /opt/go_app
+        state: absent
+      ignore_errors: yes
+
+    - name: Создать новую директорию
+      file:
+        path: /opt/go_app
+        state: directory
+        mode: '0755'
+
+- name: Копировать файлы приложения
+  copy:
+    src: "{{ item }}"
+    dest: /opt/go_app/
+  with_items:
+    - files/app.go
+    - files/go.mod
+
+- name: Развернуть Dockerfile из шаблона
+  template:
+    src: templates/go.Dockerfile.j2
+    dest: /opt/go_app/Dockerfile
+
+- name: Построить Docker-образ
+  community.docker.docker_image:
+    name: go_app
+    tag: latest
+    source: build
+    build:
+      path: /opt/go_app
+      pull: yes
+      nocache: yes
+
+- name: Запустить контейнер
+  community.docker.docker_container:
+    name: go_app
+    image: go_app:latest
+    state: started
+    restart_policy: always
+    published_ports:
+      - "8003:5000"
+    env:
+      SECRET_MESSAGE: "{{ secret_message }}"

@@ -1,0 +1,29 @@
+---
+- name: Копировать приложение
+  copy:
+    src: app.js
+    dest: /opt/node_app/app.js
+
+- name: Сгенерировать Dockerfile из шаблона
+  template:
+    src: node.Dockerfile.j2
+    dest: /opt/node_app/Dockerfile
+
+- name: Построить Docker-образ
+  community.docker.docker_image:
+    name: node_app
+    tag: latest
+    source: build
+    build:
+      path: /opt/node_app
+
+- name: Запустить контейнер приложения
+  community.docker.docker_container:
+    name: node_app
+    image: node_app:latest
+    state: started
+    restart_policy: always
+    published_ports:
+      - "8002:5000"  # Порт 8002 на хосте, 5000 в контейнере
+    env:
+      SECRET_MESSAGE: "{{ secret_message }}"

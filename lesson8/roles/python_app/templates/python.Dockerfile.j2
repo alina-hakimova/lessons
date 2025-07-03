@@ -1,0 +1,7 @@
+FROM python:3.9
+WORKDIR /app
+COPY . .
+RUN pip install flask
+EXPOSE 5000
+ENV SECRET_MESSAGE=default_value_if_needed
+CMD ["python", "app.py"]

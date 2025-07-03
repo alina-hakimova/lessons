@@ -1,0 +1,17 @@
+- name: Ensure /etc/haproxy directory exists
+  file:
+    path: /etc/haproxy
+    state: directory
+    mode: '0755'
+
+- name: Настройка HAProxy
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+  notify: reload haproxy
+
+- name: Перезагрузка HAProxy
+  service:
+    name: haproxy
+    state: reloaded
+

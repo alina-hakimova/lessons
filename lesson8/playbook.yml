@@ -1,0 +1,17 @@
+- hosts: all
+  become: true
+  vars_files:
+    - group_vars/all.yml
+    - group_vars/vault.yml
+  roles:
+    - common
+    - python_app
+    - haproxy
+    - node_app
+    - go_app
+    - java_app
+  handlers:
+    - name: reload haproxy
+      service:
+        name: haproxy
+        state: reloaded

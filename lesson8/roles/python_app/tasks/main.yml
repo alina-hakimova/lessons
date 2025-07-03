@@ -1,0 +1,29 @@
+---
+- name: Копировать приложение
+  copy:
+    src: app.py
+    dest: /opt/python_app/app.py
+
+- name: Сгенерировать Dockerfile из шаблона
+  template:
+    src: python.Dockerfile.j2
+    dest: /opt/python_app/Dockerfile
+
+- name: Построить Docker-образ
+  community.docker.docker_image:
+    name: python_app
+    tag: latest
+    source: build
+    build:
+      path: /opt/python_app
+
+- name: Запустить контейнер приложения
+  community.docker.docker_container:
+    name: python_app
+    image: python_app:latest
+    state: started
+    restart_policy: always
+    published_ports:
+      - "8001:5000"
+    env:
+      SECRET_MESSAGE: "{{ secret_message }}"
