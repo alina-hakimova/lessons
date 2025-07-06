@@ -1,0 +1,36 @@
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: notes_db
+      POSTGRES_USER: notes_user
+      POSTGRES_PASSWORD: mystrongpassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  python-app:
+    build: ./python
+    ports:
+      - "5001:5001"
+    depends_on:
+      - postgres
+
+  go-app:
+    build: ./go
+    ports:
+      - "5002:5002"
+    depends_on:
+      - postgres
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - python-app
+      - go-app
+
+volumes:
+  postgres_data:
