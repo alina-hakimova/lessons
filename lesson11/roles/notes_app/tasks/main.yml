@@ -1,0 +1,62 @@
+---
+- name: Create project directory
+  file:
+    path: /opt/notes_app
+    state: directory
+    mode: '0755'
+    
+- name: Ensure subdirectories exist
+  file:
+    path: "/opt/notes_app/{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - python
+    - go
+    - nginx
+
+- name: Copy project files
+  copy:
+    src: "{{ item }}"
+    dest: "/opt/notes_app/{{ item }}"
+    mode: '0644'
+  loop:
+    - docker-compose.yml
+    - python/requirements.txt
+    - python/notes_app.py
+    - python/Dockerfile
+    - go/go.mod
+    - go/go.sum 
+    - go/main.go
+    - go/Dockerfile
+    - nginx/nginx.conf
+    - nginx/Dockerfile
+
+- name: Create Docker secrets directory
+  file:
+    path: /opt/notes_app/secrets
+    state: directory
+    mode: '0700'
+
+- name: Create PostgreSQL password secret
+  copy:
+    content: "{{ vault_postgres_password }}"
+    dest: /opt/notes_app/secrets/postgres_password.txt
+    mode: '0600'
+
+- name: Create SSL certificate
+  copy:
+    content: "{{ vault_ssl_cert }}"
+    dest: /opt/notes_app/secrets/selfsigned.crt
+    mode: '0600'
+
+- name: Create SSL key
+  copy:
+    content: "{{ vault_ssl_key }}"
+    dest: /opt/notes_app/secrets/selfsigned.key
+    mode: '0600'
+
+- name: Build and start containers
+  command: docker compose up -d --build
+  args:
+    chdir: /opt/notes_app
