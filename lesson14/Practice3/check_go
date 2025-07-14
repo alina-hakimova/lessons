@@ -1,0 +1,83 @@
+curl -k https://localhost/go/notes
+[{"id":1,"title":"Test Note","content":"Hello Postgres","created_at":"2025-07-09T14:31:25.851775Z"},{"id":2,"title":"Test Note","content":"Hello Postgres","created_at":"2025-07-10T07:34:09.200384Z"},{"id":3,"title":"Go Note","content":"Go Postgres","created_at":"2025-07-10T07:47:34.686836Z"},{"id":4,"title":"Test Cache","content":"Redis test","created_at":"2025-07-11T13:51:32.116398Z"},{"id":5,"title":"Test Note","content":"Hello Redis Caching","created_at":"2025-07-13T12:47:47.320856Z"}]
+[{"id":1,"title":"Test Note","content":"Hello Postgres","created_at":"2025-07-09T14:31:25.851775Z"},{"id":2,"title":"Test Note","content":"Hello Postgres","created_at":"2025-07-10T07:34:09.200384Z"},{"id":3,"title":"Go Note","content":"Go Postgres","created_at":"2025-07-10T07:47:34.686836Z"},{"id":4,"title":"Test Cache","content":"Redis test","created_at":"2025-07-11T13:51:32.116398Z"},{"id":5,"title":"Test Note","content":"Hello Redis Caching","created_at":"2025-07-13T12:47:47.320856Z"}]alina2@hakubuntu2:~$
+alina2@hakubuntu2:~$ curl -k https://localhost/go/notes
+curl -k https://localhost/go/notes
+curl -k https://localhost/go/tasks
+curl -k https://localhost/go/tasks
+[{"id":1,"title":"Test Note","content":"Hello Postgres","created_at":"2025-07-09T14:31:25.851775Z"},{"id":2,"title":"Test Note","content":"Hello Postgres","created_at":"2025-07-10T07:34:09.200384Z"},{"id":3,"title":"Go Note","content":"Go Postgres","created_at":"2025-07-10T07:47:34.686836Z"},{"id":4,"title":"Test Cache","content":"Redis test","created_at":"2025-07-11T13:51:32.116398Z"},{"id":5,"title":"Test Note","content":"Hello Redis Caching","created_at":"2025-07-13T12:47:47.320856Z"}]
+[{"id":1,"title":"Test Note","content":"Hello Postgres","created_at":"2025-07-09T14:31:25.851775Z"},{"id":2,"title":"Test Note","content":"Hello Postgres","created_at":"2025-07-10T07:34:09.200384Z"},{"id":3,"title":"Go Note","content":"Go Postgres","created_at":"2025-07-10T07:47:34.686836Z"},{"id":4,"title":"Test Cache","content":"Redis test","created_at":"2025-07-11T13:51:32.116398Z"},{"id":5,"title":"Test Note","content":"Hello Redis Caching","created_at":"2025-07-13T12:47:47.320856Z"}][{"id":"686f61afec87e54efebaa8b9","title":"Hello MongoDB","description":"This is a simple task","created_at":"2025-07-10T06:46:07.936Z"},{"id":"686f6d8760b7e531fd75c6cf","title":"Buy milk","description":"From MongoDB","created_at":"2025-07-10T07:36:39.093Z"},{"id":"686f704599aeb52e016284a0","title":"Go Task","description":"Go Mongo","created_at":"2025-07-10T07:48:21.418Z"},{"id":"6871171a46f212402a3612ee","title":"Task Cache","description":"Redis test","created_at":"2025-07-11T13:52:26.762Z"},{"id":"6873ab1c902bb62cd2e9abc5","title":"Learn Redis","description":"Understand caching patterns","created_at":"2025-07-13T12:48:28.147Z"},{"id":"6873ae69ed16a72ec6969b06","title":"Learn Redis","description":"Understand caching patterns","created_at":"2025-07-13T13:02:33.146Z"}]
+[{"id":"686f61afec87e54efebaa8b9","title":"Hello MongoDB","description":"This is a simple task","created_at":"2025-07-10T06:46:07.936Z"},{"id":"686f6d8760b7e531fd75c6cf","title":"Buy milk","description":"From MongoDB","created_at":"2025-07-10T07:36:39.093Z"},{"id":"686f704599aeb52e016284a0","title":"Go Task","description":"Go Mongo","created_at":"2025-07-10T07:48:21.418Z"},{"id":"6871171a46f212402a3612ee","title":"Task Cache","description":"Redis test","created_at":"2025-07-11T13:52:26.762Z"},{"id":"6873ab1c902bb62cd2e9abc5","title":"Learn Redis","description":"Understand caching patterns","created_at":"2025-07-13T12:48:28.147Z"},{"id":"6873ae69ed16a72ec6969b06","title":"Learn Redis","description":"Understand caching patterns","created_at":"2025-07-13T13:02:33.146Z"}]alina2@hakubuntu2:~$
+alina2@hakubuntu2:~/my-project$ docker compose logs -f go
+go-1  | GET /notes took 7 ms
+go-1  | GET /notes took 5 ms
+go-1  | GET /notes took 2 ms
+go-1  | GET /notes took 2 ms
+go-1  | GET /tasks took 4 ms
+go-1  | GET /tasks took 1 ms
+go-1  | GET /notes took 6 ms
+go-1  | GET /notes took 0 ms
+go-1  | GET /notes took 3 ms
+go-1  | GET /notes took 0 ms
+go-1  | GET /notes took 2 ms
+go-1  | GET /notes took 2 ms
+go-1  | GET /notes took 1 ms
+go-1  | GET /notes took 6 ms
+go-1  | GET /notes took 47 ms
+go-1  | GET /notes took 54 ms
+go-1  | GET /notes took 42 ms
+go-1  | GET /notes took 7 ms
+
+alina2@hakubuntu2:~/my-project$ ab -n 100 -c 10 https://localhost/go/notes
+This is ApacheBench, Version 2.3 <$Revision: 1903618 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+Benchmarking localhost (be patient).....done
+Server Software:        nginx/1.29.0
+Server Hostname:        localhost
+Server Port:            443
+SSL/TLS Protocol:       TLSv1.3,TLS_AES_256_GCM_SHA384,2048,256
+Server Temp Key:        X25519 253 bits
+TLS Server Name:        localhost
+
+Document Path:          /go/notes
+Document Length:        493 bytes
+
+Concurrency Level:      10
+Time taken for tests:   0.876 seconds
+Complete requests:      100
+Failed requests:        0
+Total transferred:      64300 bytes
+HTML transferred:       49300 bytes
+Requests per second:    114.12 [#/sec] (mean)
+Time per request:       87.625 [ms] (mean)
+Time per request:       8.763 [ms] (mean, across all concurrent requests)
+Transfer rate:          71.66 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        7   31  13.9     29      81
+Processing:    10   52  20.8     52     113
+Waiting:        6   50  20.9     47     109
+Total:         21   83  28.3     80     153
+
+Percentage of the requests served within a certain time (ms)
+  50%     80
+  66%     94
+  75%    104
+  80%    109
+  90%    125
+  95%    135
+  98%    150
+  99%    153
+ 100%    153 (longest request)
+
+  alina2@hakubuntu2:~/my-project$ wrk -t4 -c10 -d10s https://localhost/go/notes
+Running 10s test @ https://localhost/go/notes
+  4 threads and 10 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    29.81ms   14.23ms 157.31ms   78.64%
+    Req/Sec    67.63     18.37   128.00     69.47%
+  2687 requests in 10.10s, 1.66MB read
+Requests/sec:    266.05
+Transfer/sec:    168.36KB
