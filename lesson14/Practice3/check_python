@@ -1,0 +1,77 @@
+alina2@hakubuntu2:~/my-project$ docker compose logs -f flask
+flask-1  | 172.18.0.7 - - [14/Jul/2025 05:31:49] "GET /notes HTTP/1.0" 200 -
+flask-1  | [2025-07-14 05:31:49,883] INFO in app: GET /notes took 1.07 ms
+flask-1  | 172.18.0.7 - - [14/Jul/2025 05:31:49] "GET /notes HTTP/1.0" 200 -
+flask-1  | [2025-07-14 05:31:50,003] INFO in app: GET /tasks took 61.89 ms
+flask-1  | 172.18.0.7 - - [14/Jul/2025 05:31:50] "GET /tasks HTTP/1.0" 200 -
+flask-1  | [2025-07-14 05:31:50,045] INFO in app: GET /tasks took 1.83 ms
+flask-1  | 172.18.0.7 - - [14/Jul/2025 05:31:50] "GET /tasks HTTP/1.0" 200 -
+
+alina2@hakubuntu2:~/my-project$ time curl -k https://localhost/python/notes
+[{"id": 1, "title": "Test Note", "content": "Hello Postgres", "created_at": "2025-07-09T14:31:25.851775"}, {"id": 2, "title": "Test Note", "content": "Hello Postgres", "created_at": "2025-07-10T07:34:09.200384"}, {"id": 3, "title": "Go Note", "content": "Go Postgres", "created_at": "2025-07-10T07:47:34.686836"}, {"id": 4, "title": "Test Cache", "content": "Redis test", "created_at": "2025-07-11T13:51:32.116398"}, {"id": 5, "title": "Test Note", "content": "Hello Redis Caching", "created_at": "2025-07-13T12:47:47.320856"}]
+real    0m0,061s
+user    0m0,032s
+sys     0m0,013s
+alina2@hakubuntu2:~/my-project$ time curl -k https://localhost/python/notes
+[{"id": 1, "title": "Test Note", "content": "Hello Postgres", "created_at": "2025-07-09T14:31:25.851775"}, {"id": 2, "title": "Test Note", "content": "Hello Postgres", "created_at": "2025-07-10T07:34:09.200384"}, {"id": 3, "title": "Go Note", "content": "Go Postgres", "created_at": "2025-07-10T07:47:34.686836"}, {"id": 4, "title": "Test Cache", "content": "Redis test", "created_at": "2025-07-11T13:51:32.116398"}, {"id": 5, "title": "Test Note", "content": "Hello Redis Caching", "created_at": "2025-07-13T12:47:47.320856"}]
+real    0m0,036s
+user    0m0,016s
+sys     0m0,008s
+
+alina2@hakubuntu2:~/my-project$ ab -n 100 -c 10 https://localhost/python/notes
+This is ApacheBench, Version 2.3 <$Revision: 1903618 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking localhost (be patient).....done
+
+
+Server Software:        nginx/1.29.0
+Server Hostname:        localhost
+Server Port:            443
+SSL/TLS Protocol:       TLSv1.3,TLS_AES_256_GCM_SHA384,2048,256
+Server Temp Key:        X25519 253 bits
+TLS Server Name:        localhost
+
+Document Path:          /python/notes
+Document Length:        489 bytes
+
+Concurrency Level:      10
+Time taken for tests:   1.106 seconds
+Complete requests:      100
+Failed requests:        99
+   (Connect: 0, Receive: 0, Length: 99, Exceptions: 0)
+Total transferred:      67662 bytes
+HTML transferred:       52662 bytes
+Requests per second:    90.40 [#/sec] (mean)
+Time per request:       110.623 [ms] (mean)
+Time per request:       11.062 [ms] (mean, across all concurrent requests)
+Transfer rate:          59.73 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        5   18   8.1     17      43
+Processing:    22   86  24.7     82     182
+Waiting:       22   85  24.8     81     182
+Total:         37  104  26.4     99     198
+
+Percentage of the requests served within a certain time (ms)
+  50%     99
+  66%    113
+  75%    117
+  80%    123
+  90%    143
+  95%    147
+  98%    165
+  99%    198
+ 100%    198 (longest request)
+
+alina2@hakubuntu2:~/my-project$ wrk -t4 -c10 -d10s https://localhost/python/notes
+Running 10s test @ https://localhost/python/notes
+  4 threads and 10 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    67.88ms   26.01ms 259.98ms   80.29%
+    Req/Sec    29.53      9.79    50.00     56.89%
+  1180 requests in 10.09s, 785.90KB read
+Requests/sec:    116.92
+Transfer/sec:     77.87KB
