@@ -1,5 +1,4 @@
 # Обратный прокси NGINX для 4 Hello World приложений с использованием Docker и Docker Compose
-
 ├── docker-compose.yaml # Основной файл конфигурации Docker Compose
 ├── go_app/
 │ ├── Dockerfile
