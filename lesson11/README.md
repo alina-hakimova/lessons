@@ -3,8 +3,6 @@
 # Ansible Deployment for Notes App
 
 Этот проект содержит Ansible роль `notes_app` для развертывания многосервисного приложения заметок, основанного на Docker Compose. В приложении используются сервисы на Go, Python (Flask), PostgreSQL и обратный прокси Nginx с SSL.
-
-## Структура проекта
 ```
 .
 ├── deploy.yml                 # Основной playbook для развертывания
