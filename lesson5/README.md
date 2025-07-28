@@ -1,23 +1,24 @@
-Задание: Обратный прокси NGINX для 4 Hello World приложений с использованием Docker и Docker Compose
-├── docker-compose.yaml         # Основной файл конфигурации Docker Compose
+# Обратный прокси NGINX для 4 Hello World приложений с использованием Docker и Docker Compose
+
+├── docker-compose.yaml # Основной файл конфигурации Docker Compose
 ├── go_app/
-│   ├── Dockerfile
-│   └── main.go
+│ ├── Dockerfile
+│ └── main.go
 ├── java_app/
-│   ├── DemoApplication.java
-│   └── Dockerfile
+│ ├── DemoApplication.java
+│ └── Dockerfile
 ├── nginx/
-│   ├── Dockerfile
-│   ├── nginx.conf
-│   └── ssl/
-│       ├── selfsigned.crt
-│       └── selfsigned.key
+│ ├── Dockerfile
+│ ├── nginx.conf
+│ └── ssl/
+│ ├── selfsigned.crt
+│ └── selfsigned.key
 ├── node_app/
-│   ├── Dockerfile
-│   └── index.js
+│ ├── Dockerfile
+│ └── index.js
 └── python_app/
-    ├── app.py
-    └── Dockerfile
+├── app.py
+└── Dockerfile
 ## Описание сервисов
 
 - **python_app** — Приложение на Python (порт 8001)
