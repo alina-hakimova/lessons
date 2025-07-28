@@ -3,32 +3,30 @@
 # Ansible Deployment for Notes App
 
 Этот проект содержит Ansible роль `notes_app` для развертывания многосервисного приложения заметок, основанного на Docker Compose. В приложении используются сервисы на Go, Python (Flask), PostgreSQL и обратный прокси Nginx с SSL.
-```
 .
-├── deploy.yml                 # Основной playbook для развертывания
-├── inventories/
-│   └── inventory.ini          # Инвентори с группами и хостами
+├── Deploy.yml # Основной playbook для развертывания
+├── Inventory/
+│ └── инвентарь.ini # Инвентори с протоколами и хостами
 ├── group_vars/
-│   └── all/
-│       └── vault.yml          # Секретные переменные (пароли и т.п.)
+│ └── all/
+│ └── vault.yml # Секретные переменные (пароли и т.п.)
 ├── roles/
-│   └── notes_app/              # Роль Ansible для развертывания Notes App
-│       ├── defaults/
-│       │   └── main.yml        # Переменные по умолчанию
-│       ├── files/              # Все необходимые файлы проекта
-│       │   ├── docker-compose.yml
-│       │   ├── go/
-│       │   ├── nginx/
-│       │   └── python/
-│       ├── handlers/
-│       │   └── main.yml        # Обработчики (handlers)
-│       ├── tasks/
-│       │   └── main.yml        # Основные задачи Ansible
-│       ├── templates/          # Jinja2 шаблоны (если есть)
-│       ├── tests/
-│       └── vars/
-│           └── main.yml        # Переменные роли
-```
+│ └── Notes_app/ # Роль Ansible для развертывания Notes App
+│ ├── defaults/
+│ │ └── main.yml # Переменные по умолчанию
+│ ├── files/ # Все необходимые файлы проекта
+│ │ ├── docker-compose.yml
+│ │ ├── go/
+│ │ ├── nginx/
+│ │ └── python/
+│ ├── handlers/
+│ │ └── main.yml # Обработчики (обработчики)
+│ ├── Tasks/
+│ │ └── main.yml # Основные задачи Ansible
+│ ├── шаблоны/ # Jinja2 шаблоны (если есть)
+│ ├── тесты/
+│ └── vars/
+│ └── main.yml #Переменные ролики
 ---
 ## Предварительные требования
 - Ansible (рекомендуется версия 2.10+)
