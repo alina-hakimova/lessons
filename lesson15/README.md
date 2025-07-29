@@ -32,7 +32,7 @@
 ---
 
 ## 📆 Структура проекта
-
+```
 my_project/
 ├── docker-compose.yml
 ├── .env
