@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine  # Используем alpine-версию
+    container_name: rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+      - RABBITMQ_ERLANG_COOKIE=supersecretcookie
+      - RABBITMQ_NODENAME=rabbit@rabbitmq  # Важно указать правильное имя узла
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - rabbitmq-config:/etc/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+    restart: unless-stopped
+    privileged: true  # Даем дополнительные права
+
+  flask:
+    build: ./app
+    env_file:
+      - .env
+    ports:
+      - "${FLASK_PORT}:${FLASK_PORT}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+
+  # Остальные сервисы остаются без изменений
+  pyworker:
+    build: ./app
+    command: python worker.py
+    env_file:
+      - .env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+
+  goapp:
+    build: ./goapp
+    env_file:
+      - .env
+    ports:
+      - "${GO_PORT}:${GO_PORT}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+
+  goworker:
+    build: ./goapp
+    command: ./goworker
+    env_file:
+      - .env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - flask
+      - goapp
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - flask
+      - goapp
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  mongodb_data:
+  grafana-storage:
+  rabbitmq-data:
+  rabbitmq-log:
+  rabbitmq-config:  # Добавляем новый volume для конфигурации
