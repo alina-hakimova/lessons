@@ -11,3 +11,11 @@ scrape_configs:
     static_configs:
       - targets: ['goapp:5002']
     metrics_path: '/metrics'
+  - job_name: go-app
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: go-app
+          service: go-app
+          __path__: /home/alina2/go-app-logs/app.log
