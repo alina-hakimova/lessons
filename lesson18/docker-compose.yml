@@ -1,0 +1,171 @@
+version: '3.8'
+
+services:
+  # Добавьте эти новые сервисы в начало
+  loki:
+    image: grafana/loki:2.9.0
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - monitoring
+
+  fluent-bit:
+    image: fluent/fluent-bit:2.2
+    volumes:
+      - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf
+      - ./app/logs:/var/log/app
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+      - backend
+
+  # Обновите сервис grafana
+  grafana:
+    image: grafana/grafana:10.2.0
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana-storage:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - loki
+      - prometheus
+    networks:
+      - monitoring
+
+  # Оставьте ваш текущий mongo без изменений, но добавьте networks
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    networks:
+      - backend
+
+  # Оставьте rabbitmq как есть, но добавьте networks
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+      - RABBITMQ_ERLANG_COOKIE=supersecretcookie
+      - RABBITMQ_NODENAME=rabbit@rabbitmq
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - rabbitmq-config:/etc/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+    restart: unless-stopped
+    privileged: true
+    networks:
+      - backend
+
+  # Для flask, pyworker, goapp, goworker добавьте networks и volumes (если нужно)
+  flask:
+    build: ./app
+    env_file:
+      - .env
+    ports:
+      - "${FLASK_PORT}:${FLASK_PORT}"
+    volumes:
+      - ./app/logs:/app/logs
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    networks:
+      - backend
+
+  pyworker:
+    build: ./app
+    command: python worker.py
+    env_file:
+      - .env
+    volumes:
+      - ./app/logs:/app/logs
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    networks:
+      - backend
+
+  goapp:
+    build: ./goapp
+    env_file:
+      - .env
+    ports:
+      - "${GO_PORT}:${GO_PORT}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    networks:
+      - backend
+
+  goworker:
+    build: ./goapp
+    command: ./goworker
+    env_file:
+      - .env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    networks:
+      - backend
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - flask
+      - goapp
+    networks:
+      - backend
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - flask
+      - goapp
+    networks:
+      - monitoring
+      - backend
+
+# Добавьте это в конец файла
+networks:
+  monitoring:
+    driver: bridge
+  backend:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  grafana-storage:
+  rabbitmq-data:
+  rabbitmq-config:

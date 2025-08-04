@@ -1,0 +1,4 @@
+{"level": "INFO", "time": "2025-08-04 11:12:42,370", "message": "Successfully connected to RabbitMQ", "module": "app", "function": "init_rabbitmq", "service": "flask-app"}
+{"level": "INFO", "time": "2025-08-04 11:12:42,385", "message": "Successfully connected to MongoDB", "module": "app", "function": "init_mongodb", "service": "flask-app"}
+{"level": "INFO", "time": "2025-08-04 11:57:55,486", "message": "Successfully connected to RabbitMQ", "module": "app", "function": "init_rabbitmq", "service": "flask-app"}
+{"level": "INFO", "time": "2025-08-04 11:57:55,509", "message": "Successfully connected to MongoDB", "module": "app", "function": "init_mongodb", "service": "flask-app"}
