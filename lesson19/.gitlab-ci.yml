@@ -1,0 +1,84 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  DEPLOY_USER: "deployuser"
+  DEPLOY_SERVER: "your.server.address"
+  SYSTEMD_SERVICE_NAME: "myapp"
+
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^main|develop$/'
+      when: always
+    - if: '$CI_COMMIT_TAG'
+      when: always
+    - when: never
+
+build-python:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  script:
+    - export TAG=${CI_COMMIT_TAG:-$CI_COMMIT_SHA}
+    - docker build -t python-app:$TAG ./python
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+
+build-go:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  script:
+    - export TAG=${CI_COMMIT_TAG:-$CI_COMMIT_SHA}
+    - docker build -t go-app:$TAG ./go
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+
+test-python:
+  stage: test
+  image: python:3.12
+  script:
+    - cd python
+    - pip install -r requirements.txt
+    - python -m pytest test_main.py -v
+  rules:
+    - if: '$CI_COMMIT_BRANCH || $CI_COMMIT_TAG'
+
+test-go:
+  stage: test
+  image: golang:1.22
+  script:
+    - cd go
+    - go test -v ./...
+  rules:
+    - if: '$CI_COMMIT_BRANCH || $CI_COMMIT_TAG'
+
+build-and-deploy:
+  stage: deploy
+  image: docker:24
+  services:
+    - docker:24-dind
+  script:
+    - export TAG=${CI_COMMIT_TAG:-$CI_COMMIT_SHA}
+    - docker build -t go-app:$TAG ./go
+    - docker build -t python-app:$TAG ./python
+    - docker-compose down
+    - docker-compose up -d
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy-systemd:
+  stage: deploy
+  tags:
+    - shell-runner
+  script:
+    - ssh $DEPLOY_USER@$DEPLOY_SERVER "sudo systemctl restart $SYSTEMD_SERVICE_NAME"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+
+

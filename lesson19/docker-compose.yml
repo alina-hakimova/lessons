@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  python-app:
+    image: python-app:${CI_COMMIT_SHA}
+    ports:
+      - "8000:8000"
+    restart: always
+  go-app:
+    image: go-app:${CI_COMMIT_SHA}
+    ports:
+      - "8080:8080"
+    restart: always
