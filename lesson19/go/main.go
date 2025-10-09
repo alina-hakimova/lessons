@@ -14,7 +14,7 @@ func main() {
 }
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello from Go Service!")
+	fmt.Fprintf(w, "app.v1")
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {

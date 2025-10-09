@@ -4,9 +4,12 @@ stages:
   - deploy
 
 variables:
-  DEPLOY_USER: "deployuser"
-  DEPLOY_SERVER: "your.server.address"
-  SYSTEMD_SERVICE_NAME: "myapp"
+  DEPLOY_USER: "ubuntu"
+  DEPLOY_SERVER: "192.168.225.128"
+  DOCKER_PYTHON_APP: "docker.app.python.v1"
+  DOCKER_GO_APP: "docker.app.go.v1" 
+  SYSTEMD_PYTHON_APP: "systemd.app.python.v1"
+  SYSTEMD_GO_APP: "systemd.app.go.v1"
 
 workflow:
   rules:
@@ -16,25 +19,56 @@ workflow:
       when: always
     - when: never
 
-build-python:
+# 1. Python Docker приложение
+build-python-docker:
   stage: build
   image: docker:24
   services:
     - docker:24-dind
   script:
-    - export TAG=${CI_COMMIT_TAG:-$CI_COMMIT_SHA}
-    - docker build -t python-app:$TAG ./python
+    - export TAG="v1.${CI_PIPELINE_IID}"
+    - docker build -t $DOCKER_PYTHON_APP:$TAG ./python
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
 
-build-go:
+# 2. Go Docker приложение  
+build-go-docker:
   stage: build
   image: docker:24
   services:
     - docker:24-dind
   script:
-    - export TAG=${CI_COMMIT_TAG:-$CI_COMMIT_SHA}
-    - docker build -t go-app:$TAG ./go
+    - export TAG="v1.${CI_PIPELINE_IID}"
+    - docker build -t $DOCKER_GO_APP:$TAG ./go
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+
+# 3. Python Systemd приложение
+build-python-systemd:
+  stage: build
+  image: python:3.12
+  script:
+    - export TAG="v1.${CI_PIPELINE_IID}"
+    - cd python
+    - pip install -r requirements.txt
+    - echo "app.v1 - Python Systemd Application" > version.txt
+  artifacts:
+    paths:
+      - python/
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+
+# 4. Go Systemd приложение
+build-go-systemd:
+  stage: build
+  image: golang:1.22
+  script:
+    - export TAG="v1.${CI_PIPELINE_IID}"
+    - cd go
+    - go build -ldflags="-X main.version=$TAG" -o app-go-$TAG
+  artifacts:
+    paths:
+      - go/app-go-*
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
 
@@ -57,28 +91,77 @@ test-go:
   rules:
     - if: '$CI_COMMIT_BRANCH || $CI_COMMIT_TAG'
 
-build-and-deploy:
+# КНОПКА 1: Деплой Python Docker
+deploy-python-docker:
   stage: deploy
   image: docker:24
   services:
     - docker:24-dind
+  needs: ["build-python-docker"]
   script:
-    - export TAG=${CI_COMMIT_TAG:-$CI_COMMIT_SHA}
-    - docker build -t go-app:$TAG ./go
-    - docker build -t python-app:$TAG ./python
-    - docker-compose down
-    - docker-compose up -d
+    - export TAG="v1.${CI_PIPELINE_IID}"
+    - docker stop $DOCKER_PYTHON_APP || true
+    - docker rm $DOCKER_PYTHON_APP || true
+    - docker run -d --name $DOCKER_PYTHON_APP -p 8005:8000 $DOCKER_PYTHON_APP:$TAG
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
 
-deploy-systemd:
+# КНОПКА 2: Деплой Go Docker
+deploy-go-docker:
   stage: deploy
-  tags:
-    - shell-runner
+  image: docker:24
+  services:
+    - docker:24-dind
+  needs: ["build-go-docker"]
   script:
-    - ssh $DEPLOY_USER@$DEPLOY_SERVER "sudo systemctl restart $SYSTEMD_SERVICE_NAME"
+    - export TAG="v1.${CI_PIPELINE_IID}"
+    - docker stop $DOCKER_GO_APP || true
+    - docker rm $DOCKER_GO_APP || true
+    - docker run -d --name $DOCKER_GO_APP -p 8010:8001 $DOCKER_GO_APP:$TAG
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
 
+# КНОПКА 3: Деплой Python Systemd
+deploy-python-systemd:
+  stage: deploy
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client rsync -y )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
+  script:
+    - export TAG="v1.${CI_PIPELINE_IID}"
+    - ./deploy-ssh.sh
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
 
-
+# КНОПКА 4: Деплой Go Systemd  
+deploy-go-systemd:
+  stage: deploy
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
+  script:
+    - export TAG="v1.${CI_PIPELINE_IID}"
+    - cd go
+    - go build -ldflags="-X main.version=$TAG" -o app-go-$TAG
+    - scp app-go-$TAG $DEPLOY_USER@$DEPLOY_SERVER:/tmp/app-go-$TAG
+    - ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        sudo cp /tmp/app-go-$TAG /usr/local/bin/app-go-current &&
+        sudo chmod +x /usr/local/bin/app-go-current &&
+        sudo systemctl stop $SYSTEMD_GO_APP || true &&
+        sudo systemctl start $SYSTEMD_GO_APP &&
+        echo '✅ Go Systemd app.v1 deployed successfully'
+      "
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
