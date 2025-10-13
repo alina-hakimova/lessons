@@ -1,0 +1,28 @@
+# ТЕКУЩИЕ ПОРТЫ (из v1 проекта)
+app3 (Service-Py systemd)       :5000  # текущий systemd Python
+app4 (Service-Go systemd)       :8080  # текущий systemd Go
+app1 (Service-Py Docker)        :5001  # текущий Docker Python  
+app2 (Service-Go Docker)        :5002  # текущий Docker Go
+
+# DEV ОКРУЖЕНИЕ (ветка develop) - переиспользуем текущие порты
+app1-dev (Service-Py Docker)    :5001
+app2-dev (Service-Go Docker)    :5002  
+app3-dev (Service-Py systemd)   :5000
+app4-dev (Service-Go systemd)   :8080
+
+# STAGE ОКРУЖЕНИЕ (git-теги vX.Y.Z) - НОВЫЕ порты
+app1-stage (Service-Py Docker)  :7001
+app2-stage (Service-Go Docker)  :7002
+app3-stage (Service-Py systemd) :8001
+app4-stage (Service-Go systemd) :8002
+
+# Nginx пути
+/dev/app1/   → :5001
+/dev/app2/   → :5002
+/dev/app3/   → :5000
+/dev/app4/   → :8080
+
+/stage/app1/ → :7001
+/stage/app2/ → :7002
+/stage/app3/ → :8001
+/stage/app4/ → :8002

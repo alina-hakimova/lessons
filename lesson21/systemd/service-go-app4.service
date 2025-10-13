@@ -1,0 +1,17 @@
+[Unit]
+Description=Service-Go App4 (Shipments - systemd)
+After=network.target
+
+[Service]
+Type=simple
+User=user
+WorkingDirectory=/home/user/graduation-project/service-go
+Environment=VERSION=systemd-build
+ExecStart=/home/user/graduation-project/service-go/service-go
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,17 @@
+[Unit]
+Description=Service-Py App3 (Orders - systemd)
+After=network.target
+
+[Service]
+Type=simple
+User=user
+WorkingDirectory=/home/user/graduation-project/service_py
+Environment=VERSION=systemd-build
+ExecStart=/home/user/graduation-project/service_py/venv/bin/python /home/user/graduation-project/service_py/app.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,207 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  VM_IP: "128.0.140.178"
+  VM_USER: "user"
+  SSH_PORT: "3311"
+  PY_DEPLOY_PATH: "/home/user/graduation-project/service_py"
+  GO_DEPLOY_PATH: "/home/user/graduation-project/service-go"
+
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: always
+
+build-service-py:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  script:
+    - cd service_py
+    - docker build -t service-py:$CI_COMMIT_SHORT_SHA .
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+build-service-go:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  script:
+    - cd service-go
+    - docker build -t service-go:$CI_COMMIT_SHORT_SHA .
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+test-service-py:
+  stage: test
+  image: python:3.11
+  script:
+    - cd service_py
+    - pip install -r requirements.txt
+    - pytest test_app.py -v
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+test-service-go:
+  stage: test
+  image: golang:1.19
+  script:
+    - cd service-go
+    - go test -v
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+.before_deploy:
+  before_script:
+    - apk add --no-cache openssh-client
+    - mkdir -p ~/.ssh
+    - cp "$SSH_PRIVATE_KEY" ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+    - ssh-keyscan -p $SSH_PORT $VM_IP >> ~/.ssh/known_hosts || true
+
+# DEV ENVIRONMENT - 4 endpoints
+deploy:dev-app1:
+  stage: deploy
+  image: alpine:latest
+  extends: .before_deploy
+  environment:
+    name: dev
+  script:
+    - ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p $SSH_PORT $VM_USER@$VM_IP "
+        cd $PY_DEPLOY_PATH;
+        docker build -t service-py:dev-$CI_COMMIT_SHORT_SHA .;
+        docker stop app1-dev || true;
+        docker rm app1-dev || true;
+        docker run -d --name app1-dev -p 5001:5000 -e VERSION=dev-$CI_COMMIT_SHORT_SHA service-py:dev-$CI_COMMIT_SHORT_SHA
+      "
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy:dev-app2:
+  stage: deploy
+  image: alpine:latest
+  extends: .before_deploy
+  environment:
+    name: dev
+  script:
+    - ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p $SSH_PORT $VM_USER@$VM_IP "
+        cd $GO_DEPLOY_PATH;
+        docker build -t service-go:dev-$CI_COMMIT_SHORT_SHA .;
+        docker stop app2-dev || true;
+        docker rm app2-dev || true;
+        docker run -d --name app2-dev -p 5002:8080 -e VERSION=dev-$CI_COMMIT_SHORT_SHA service-go:dev-$CI_COMMIT_SHORT_SHA
+      "
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy:dev-app3:
+  stage: deploy
+  image: alpine:latest
+  extends: .before_deploy
+  environment:
+    name: dev
+  script:
+    - ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p $SSH_PORT $VM_USER@$VM_IP "
+        cd /home/user/dev/service_py;
+        pip3 install -r requirements.txt;
+        echo 'VERSION=dev-$CI_COMMIT_SHORT_SHA' > .env;
+        sudo systemctl restart service-py-app3-dev
+      "
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy:dev-app4:
+  stage: deploy
+  image: alpine:latest
+  extends: .before_deploy
+  environment:
+    name: dev
+  script:
+    - ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p $SSH_PORT $VM_USER@$VM_IP "
+        cd /home/user/dev/service_go;
+        go build -o service-go;
+        echo 'VERSION=dev-$CI_COMMIT_SHORT_SHA' > .env;
+        sudo systemctl restart service-go-app4-dev
+      "
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# STAGE ENVIRONMENT - 4 endpoints
+deploy:stage-app1:
+  stage: deploy
+  image: alpine:latest
+  extends: .before_deploy
+  environment:
+    name: stage
+  script:
+    - ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p $SSH_PORT $VM_USER@$VM_IP "
+        cd $PY_DEPLOY_PATH;
+        docker build -t service-py:stage-$CI_COMMIT_SHORT_SHA .;
+        docker stop app1-stage || true;
+        docker rm app1-stage || true;
+        docker run -d --name app1-stage -p 7001:5000 -e VERSION=stage-$CI_COMMIT_SHORT_SHA service-py:stage-$CI_COMMIT_SHORT_SHA
+      "
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy:stage-app2:
+  stage: deploy
+  image: alpine:latest
+  extends: .before_deploy
+  environment:
+    name: stage
+  script:
+    - ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p $SSH_PORT $VM_USER@$VM_IP "
+        cd $GO_DEPLOY_PATH;
+        docker build -t service-go:stage-$CI_COMMIT_SHORT_SHA .;
+        docker stop app2-stage || true;
+        docker rm app2-stage || true;
+        docker run -d --name app2-stage -p 7002:8080 -e VERSION=stage-$CI_COMMIT_SHORT_SHA service-go:stage-$CI_COMMIT_SHORT_SHA
+      "
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy:stage-app3:
+  stage: deploy
+  image: alpine:latest
+  extends: .before_deploy
+  environment:
+    name: stage
+  script:
+    - ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p $SSH_PORT $VM_USER@$VM_IP "
+        cd /home/user/stage/service_py;
+        pip3 install -r requirements.txt;
+        echo 'VERSION=stage-$CI_COMMIT_SHORT_SHA' > .env;
+        sudo systemctl restart service-py-app3-stage
+      "
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy:stage-app4:
+  stage: deploy
+  image: alpine:latest
+  extends: .before_deploy
+  environment:
+    name: stage
+  script:
+    - ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p $SSH_PORT $VM_USER@$VM_IP "
+        cd /home/user/stage/service_go;
+        go build -o service-go;
+        echo 'VERSION=stage-$CI_COMMIT_SHORT_SHA' > .env;
+        sudo systemctl restart service-go-app4-stage
+      "
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
